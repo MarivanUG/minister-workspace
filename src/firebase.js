@@ -8,7 +8,7 @@ import { getFirestore } from "firebase/firestore";
 // Note: You should replace this with your own project config for the Minister Workspace.
 // Currently reusing the provided config to avoid block. Ideally, create a new Firebase Project.
 const firebaseConfig = {
-    apiKey: "AIzaSyDKw_uJDVEf1nMEQvdp8HTa6uAkqw-8UpI",
+    apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
     authDomain: "prosperledger-2066e.firebaseapp.com",
     projectId: "prosperledger-2066e",
     storageBucket: "prosperledger-2066e.firebasestorage.app",
