@@ -4,6 +4,9 @@ import { db } from '../firebase';
 import { Plus, Trash2, Calendar, FileText, LayoutList, Sparkles, RefreshCw } from 'lucide-react';
 import { format } from 'date-fns';
 import { GoogleGenerativeAI } from '@google/generative-ai';
+import { toast } from 'react-hot-toast';
+import ReactQuill from 'react-quill';
+import 'react-quill/dist/quill.snow.css';
 
 const SharedListManager = ({
     title,
@@ -39,7 +42,10 @@ const SharedListManager = ({
     }, []);
 
     const handleAISuggest = async (fieldName, promptTemplate) => {
-        if (!apiKey) return alert("Please configure your Gemini API Key in Settings first.");
+        if (!apiKey) {
+            toast.error("Please configure your Gemini API Key in Settings first.");
+            return;
+        }
 
         setAiLoadingField(fieldName);
         try {
@@ -56,9 +62,10 @@ const SharedListManager = ({
             const responseText = result.response.text();
 
             setFormData(prev => ({ ...prev, [fieldName]: responseText }));
+            toast.success("AI suggestion generated!");
         } catch (error) {
             console.error("AI Generation Error:", error);
-            alert("Failed to generate suggestion. " + error.message);
+            toast.error("Failed to generate suggestion.");
         } finally {
             setAiLoadingField(null);
         }
@@ -79,9 +86,10 @@ const SharedListManager = ({
             });
             setShowForm(false);
             setFormData(fields.reduce((acc, field) => ({ ...acc, [field.name]: field.defaultValue || '' }), {}));
+            toast.success("Record saved successfully!");
         } catch (error) {
             console.error("Error adding document:", error);
-            alert("Failed to save record.");
+            toast.error("Failed to save record.");
         } finally {
             setIsSubmitting(false);
         }
@@ -128,6 +136,30 @@ const SharedListManager = ({
                     />
                 </div>
             )
+        } else if (field.type === 'richtext') {
+            return (
+                <div key={field.name} className={`space-y-1 relative ${field.fullWidth ? 'col-span-full' : ''}`}>
+                    <label className="text-xs font-bold text-gray-700 uppercase tracking-widest ml-1">{field.label}</label>
+                    {renderAIAssistant()}
+                    <div className="bg-white border border-gray-200 rounded-xl overflow-hidden shadow-sm focus-within:ring-2 focus-within:ring-indigo-500 focus-within:border-indigo-500 transition-all">
+                        <ReactQuill
+                            theme="snow"
+                            value={formData[field.name]}
+                            onChange={(content) => setFormData(prev => ({ ...prev, [field.name]: content }))}
+                            placeholder={field.placeholder}
+                            className="h-64 sm:h-80"
+                            modules={{
+                                toolbar: [
+                                    [{ 'header': [1, 2, 3, false] }],
+                                    ['bold', 'italic', 'underline', 'strike'],
+                                    [{ 'list': 'ordered' }, { 'list': 'bullet' }],
+                                    ['link', 'clean']
+                                ]
+                            }}
+                        />
+                    </div>
+                </div>
+            );
         }
         return (
             <div key={field.name} className={`space-y-1 relative ${field.fullWidth ? 'col-span-full' : ''}`}>

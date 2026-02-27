@@ -3,6 +3,7 @@ import { Sparkles, ArrowRight, ArrowLeft, CheckCircle2, Save, FileText, Pickaxe,
 import { collection, addDoc, doc, getDoc, serverTimestamp } from 'firebase/firestore';
 import { db } from '../firebase';
 import { GoogleGenerativeAI } from '@google/generative-ai';
+import { toast } from 'react-hot-toast';
 
 const SermonPrepWizard = () => {
     const [step, setStep] = useState(1);
@@ -52,7 +53,7 @@ const SermonPrepWizard = () => {
             setStep(2);
         } catch (error) {
             console.error(error);
-            alert("Error generating titles.");
+            toast.error("Error generating titles.");
         } finally {
             setLoading(false);
         }
@@ -79,7 +80,7 @@ Format it beautifully using Markdown with:
             setStep(3);
         } catch (error) {
             console.error(error);
-            alert("Error generating outline.");
+            toast.error("Error generating outline.");
         } finally {
             setLoading(false);
         }
@@ -96,10 +97,11 @@ Format it beautifully using Markdown with:
                 date: new Date().toISOString().split('T')[0],
                 createdAt: serverTimestamp()
             });
+            toast.success("Saved perfectly to 'My Sermons'!");
             setStep(4);
         } catch (error) {
             console.error(error);
-            alert("Error saving sermon.");
+            toast.error("Error saving sermon.");
         } finally {
             setLoading(false);
         }

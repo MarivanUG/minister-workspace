@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { Toaster } from 'react-hot-toast';
 import { collection, onSnapshot, doc, getDoc, setDoc } from 'firebase/firestore';
 import { db } from './firebase';
 
@@ -137,6 +138,7 @@ match /config/minister_admin { allow read, write: if true; }`}
   return (
     <Router>
       <div className="flex min-h-screen bg-[#f8fafc] text-gray-800 font-sans selection:bg-indigo-100 selection:text-indigo-900">
+        <Toaster position="top-right" />
         <Sidebar onLogout={handleLogout} />
 
         <main className="flex-1 p-6 md:p-10 lg:pl-16 overflow-y-auto w-full max-w-7xl mx-auto">

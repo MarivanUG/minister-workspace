@@ -7,7 +7,7 @@ const BibleStudy = ({ records, collectionName }) => {
         { name: 'topic', label: 'Study Topic / Book', type: 'text', placeholder: 'e.g. Book of Romans or Grace', required: true, fullWidth: true },
         { name: 'date', label: 'Study Date', type: 'date', defaultValue: new Date().toISOString().split('T')[0], required: true },
         { name: 'scriptures', label: 'Reference Scriptures', type: 'text', placeholder: 'e.g. Romans 8:1-4' },
-        { name: 'insights', label: 'Insights & Revelation', type: 'textarea', placeholder: 'What the Holy Spirit revealed...', required: true, fullWidth: true, aiPrompt: 'Based on the scripture "{scriptures}" and the topic "{topic}", provide a theological breakdown of the text, historical context, and 2 deep spiritual insights a minister could use for teaching.' },
+        { name: 'insights', label: 'Insights & Revelation', type: 'richtext', placeholder: 'What the Holy Spirit revealed...', required: true, fullWidth: true, aiPrompt: 'Based on the scripture "{scriptures}" and the topic "{topic}", provide a theological breakdown of the text, historical context, and 2 deep spiritual insights a minister could use for teaching.' },
     ];
 
     const renderRecord = (record, onDelete) => (
@@ -27,7 +27,7 @@ const BibleStudy = ({ records, collectionName }) => {
                 {record.insights && (
                     <div className="mt-3 text-gray-800 text-sm leading-relaxed p-4 bg-[#fffdf0] border border-amber-100 rounded-xl relative overflow-hidden">
                         <div className="absolute top-0 left-0 w-1 h-full bg-amber-400"></div>
-                        <p className="font-medium whitespace-pre-wrap">{record.insights}</p>
+                        <div className="font-medium prose prose-sm prose-amber max-w-none richtext-content" dangerouslySetInnerHTML={{ __html: record.insights }}></div>
                     </div>
                 )}
             </div>

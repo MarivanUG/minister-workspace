@@ -5,6 +5,7 @@ import { db } from '../firebase';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import { Document, Packer, Paragraph, TextRun, HeadingLevel } from 'docx';
 import { saveAs } from 'file-saver';
+import { toast } from 'react-hot-toast';
 
 const DocumentSummarizer = () => {
     const [inputText, setInputText] = useState('');
@@ -46,7 +47,7 @@ const DocumentSummarizer = () => {
 
         // Basic Markdown to Docx parser
         let inList = false;
-        
+
         for (let line of lines) {
             if (!line.trim()) {
                 children.push(new Paragraph({ text: "" }));
@@ -78,7 +79,10 @@ const DocumentSummarizer = () => {
 
     const handleSummarize = async () => {
         if (!inputText.trim() && files.length === 0) return;
-        if (!apiKey) return alert("Please configure your Gemini API Key in Settings first.");
+        if (!apiKey) {
+            toast.error("Please configure your Gemini API Key in Settings first.");
+            return;
+        }
 
         setLoading(true);
         setSummary('');
@@ -87,7 +91,7 @@ const DocumentSummarizer = () => {
         try {
             const genAI = new GoogleGenerativeAI(apiKey);
             const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
-            
+
             const isSingle = (inputText.trim() ? 1 : 0) + files.length === 1;
 
             const singlePrompt = `You are an expert summarizer of Christian teachings. I will provide you with document containing a teaching. Your task is to create a well-structured summary that is:
@@ -118,7 +122,7 @@ The final summary should flow logically, read naturally, and preserve the teachi
                     reader.onerror = reject;
                     reader.readAsDataURL(file);
                 });
-                
+
                 parts.push({
                     inlineData: {
                         data: base64Data,
@@ -130,7 +134,7 @@ The final summary should flow logically, read naturally, and preserve the teachi
             const result = await model.generateContent(parts);
             const responseText = result.response.text();
             setSummary(responseText);
-            
+
             // Generate Word doc automatically if it was multi-doc, OR based on user's request.
             // The prompt says "share final outputs in docx" which implies downloading it.
             generateDocx(responseText, "Teaching_Summary.docx");
@@ -138,6 +142,7 @@ The final summary should flow logically, read naturally, and preserve the teachi
         } catch (error) {
             console.error("Summarization Error:", error);
             setSummary("Error generating summary: " + error.message);
+            toast.error("Error generating summary.");
         } finally {
             setLoading(false);
         }
@@ -152,9 +157,10 @@ The final summary should flow logically, read naturally, and preserve the teachi
             const promptText = `Act as a senior minister. Based on the following extensive teaching summary, prepare a suggested sermon outline that I can preach to my congregation. Make sure the sermon has a clear central theme, an introduction, 3 actionable main points supported by the scriptures in the summary, and a strong conclusion.\n\nSummary:\n${summary}`;
             const result = await model.generateContent(promptText);
             setSermon(result.response.text());
+            toast.success("Sermon drafted successfully!");
         } catch (error) {
             console.error(error);
-            alert("Error generating sermon.");
+            toast.error("Error generating sermon.");
         } finally {
             setSermonLoading(false);
         }
@@ -182,7 +188,7 @@ The final summary should flow logically, read naturally, and preserve the teachi
             )}
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                
+
                 {/* Inputs Area */}
                 <div className="bg-white rounded-3xl border border-gray-100 shadow-sm flex flex-col overflow-hidden relative">
                     <div className="bg-gray-50/80 px-5 py-4 border-b border-gray-100 font-bold text-gray-700 flex items-center justify-between">
@@ -190,18 +196,18 @@ The final summary should flow logically, read naturally, and preserve the teachi
                         <div className="flex items-center gap-2">
                             <label className="cursor-pointer bg-white px-3 py-1.5 border border-gray-200 shadow-sm rounded-lg text-xs font-bold text-gray-700 hover:bg-gray-50 flex items-center gap-2 transition active:scale-95">
                                 <UploadCloud size={14} /> Add PDF
-                                <input 
-                                    type="file" 
-                                    accept="application/pdf, text/plain" 
+                                <input
+                                    type="file"
+                                    accept="application/pdf, text/plain"
                                     multiple
-                                    className="hidden" 
-                                    onChange={handleFileChange} 
+                                    className="hidden"
+                                    onChange={handleFileChange}
                                 />
                             </label>
                         </div>
                     </div>
                     <div className="flex-1 p-5 flex flex-col overflow-y-auto">
-                        
+
                         {files.length > 0 && (
                             <div className="mb-4 space-y-2">
                                 {files.map((file, idx) => (
@@ -251,7 +257,7 @@ The final summary should flow logically, read naturally, and preserve the teachi
                             <Sparkles size={16} className="text-emerald-600" /> AI Output
                         </div>
                         {summary && (
-                             <button
+                            <button
                                 onClick={() => generateDocx(sermon || summary, "Minister_Document.docx")}
                                 className="text-xs font-bold text-emerald-700 bg-emerald-100 hover:bg-emerald-200 px-3 py-1.5 rounded-lg flex items-center gap-1 transition"
                             >
@@ -302,9 +308,9 @@ The final summary should flow logically, read naturally, and preserve the teachi
                             </div>
                         )}
                         {sermon && (
-                             <div className="space-y-6">
+                            <div className="space-y-6">
                                 <div className="flex items-center gap-2 text-indigo-700 bg-indigo-50 p-3 rounded-xl border border-indigo-100 font-bold mb-4">
-                                     <Sparkles size={16} /> Suggested Sermon Outline Generated
+                                    <Sparkles size={16} /> Suggested Sermon Outline Generated
                                 </div>
                                 <div className="prose prose-indigo prose-sm sm:prose-base prose-headings:font-black prose-p:font-medium prose-p:leading-relaxed text-gray-800">
                                     {sermon.split('\n').map((line, i) => {
@@ -317,7 +323,7 @@ The final summary should flow logically, read naturally, and preserve the teachi
                                         return <p key={i}>{line.replace(/\*\*/g, '')}</p>;
                                     })}
                                 </div>
-                             </div>
+                            </div>
                         )}
                     </div>
                 </div>

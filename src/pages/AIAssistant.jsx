@@ -3,6 +3,7 @@ import { Sparkles, Send, User, Bot, Info, Key, Check } from 'lucide-react';
 import { doc, getDoc, setDoc } from 'firebase/firestore';
 import { db } from '../firebase';
 import { GoogleGenerativeAI } from '@google/generative-ai';
+import { toast } from 'react-hot-toast';
 
 const AIAssistant = () => {
     const [messages, setMessages] = useState([
@@ -54,7 +55,7 @@ const AIAssistant = () => {
             setIsKeySaved(true);
         } catch (error) {
             console.error("Error saving key:", error);
-            alert("Failed to save key. Make sure your Firestore rules are updated.");
+            toast.error("Failed to save key. Make sure your Firestore rules are updated.");
         } finally {
             setIsSavingKey(false);
         }
