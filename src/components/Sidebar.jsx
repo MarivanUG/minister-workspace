@@ -1,16 +1,19 @@
 import React from 'react';
 import { NavLink } from 'react-router-dom';
-import { LayoutDashboard, PenTool, BookOpen, Headphones, Book, Sparkles, LogOut } from 'lucide-react';
+import { LayoutDashboard, PenTool, BookOpen, Headphones, Book, Sparkles, FileText, Pickaxe, Settings as SettingsIcon, LogOut } from 'lucide-react';
 
 const Sidebar = ({ onLogout }) => {
 
     const menuItems = [
         { name: 'Dashboard', icon: LayoutDashboard, path: '/' },
+        { name: 'Sermon Wizard', icon: Pickaxe, path: '/wizard' },
         { name: 'My Sermons', icon: PenTool, path: '/sermons' },
         { name: 'Bible Study', icon: BookOpen, path: '/bible-study' },
         { name: 'Other Preachers', icon: Headphones, path: '/external-sermons' },
         { name: 'Bible Library', icon: Book, path: '/bible-library' },
         { name: 'AI Assistant', icon: Sparkles, path: '/ai-assistant' },
+        { name: 'Document Summarizer', icon: FileText, path: '/summarizer' },
+        { name: 'Settings', icon: SettingsIcon, path: '/settings' },
     ];
 
     return (
@@ -30,10 +33,10 @@ const Sidebar = ({ onLogout }) => {
                             key={item.name}
                             to={item.path}
                             className={({ isActive }) =>
-                                `flex items-center gap-3 px-4 py-3 rounded-xl font-bold transition-all ${isActive
+                                `flex items - center gap - 3 px - 4 py - 3 rounded - xl font - bold transition - all ${isActive
                                     ? 'bg-indigo-50 text-indigo-700'
                                     : 'text-gray-600 hover:bg-gray-50 hover:text-indigo-600'
-                                }`
+                                } `
                             }
                         >
                             <Icon size={20} />

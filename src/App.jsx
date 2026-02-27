@@ -11,6 +11,9 @@ import BibleStudy from './pages/BibleStudy';
 import ExternalSermons from './pages/ExternalSermons';
 import BibleLibrary from './pages/BibleLibrary';
 import AIAssistant from './pages/AIAssistant';
+import Settings from './pages/Settings';
+import DocumentSummarizer from './pages/DocumentSummarizer';
+import SermonPrepWizard from './pages/SermonPrepWizard';
 
 function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -144,6 +147,9 @@ match /config/minister_admin { allow read, write: if true; }`}
             <Route path="/external-sermons" element={<ExternalSermons records={externalSermons} collectionName="external_sermons" />} />
             <Route path="/bible-library" element={<BibleLibrary />} />
             <Route path="/ai-assistant" element={<AIAssistant />} />
+            <Route path="/summarizer" element={<DocumentSummarizer />} />
+            <Route path="/wizard" element={<SermonPrepWizard />} />
+            <Route path="/settings" element={<Settings />} />
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </main>

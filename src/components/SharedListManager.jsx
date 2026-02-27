@@ -1,8 +1,9 @@
-import React, { useState } from 'react';
-import { collection, addDoc, deleteDoc, doc, serverTimestamp } from 'firebase/firestore';
+import React, { useState, useEffect } from 'react';
+import { collection, addDoc, deleteDoc, doc, getDoc, serverTimestamp } from 'firebase/firestore';
 import { db } from '../firebase';
-import { Plus, Trash2, Calendar, FileText, LayoutList } from 'lucide-react';
+import { Plus, Trash2, Calendar, FileText, LayoutList, Sparkles, RefreshCw } from 'lucide-react';
 import { format } from 'date-fns';
+import { GoogleGenerativeAI } from '@google/generative-ai';
 
 const SharedListManager = ({
     title,
@@ -17,6 +18,51 @@ const SharedListManager = ({
         fields.reduce((acc, field) => ({ ...acc, [field.name]: field.defaultValue || '' }), {})
     );
     const [isSubmitting, setIsSubmitting] = useState(false);
+
+    // AI State
+    const [apiKey, setApiKey] = useState('');
+    const [aiLoadingField, setAiLoadingField] = useState(null);
+
+    useEffect(() => {
+        const fetchKey = async () => {
+            try {
+                const configRef = doc(db, 'config', 'minister_admin');
+                const snap = await getDoc(configRef);
+                if (snap.exists() && snap.data().geminiApiKey) {
+                    setApiKey(snap.data().geminiApiKey);
+                }
+            } catch (error) {
+                console.error("Error fetching AI key:", error);
+            }
+        };
+        fetchKey();
+    }, []);
+
+    const handleAISuggest = async (fieldName, promptTemplate) => {
+        if (!apiKey) return alert("Please configure your Gemini API Key in Settings first.");
+
+        setAiLoadingField(fieldName);
+        try {
+            const genAI = new GoogleGenerativeAI(apiKey);
+            const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
+
+            // Replaces template variables like {topic} or {scriptures} with current form data
+            let prompt = promptTemplate;
+            Object.keys(formData).forEach(key => {
+                prompt = prompt.replace(`{${key}}`, formData[key] || "something");
+            });
+
+            const result = await model.generateContent(prompt);
+            const responseText = result.response.text();
+
+            setFormData(prev => ({ ...prev, [fieldName]: responseText }));
+        } catch (error) {
+            console.error("AI Generation Error:", error);
+            alert("Failed to generate suggestion. " + error.message);
+        } finally {
+            setAiLoadingField(null);
+        }
+    };
 
     const handleInputChange = (e) => {
         const { name, value } = e.target;
@@ -49,10 +95,28 @@ const SharedListManager = ({
 
     // Prepare inputs
     const InputFields = fields.map(field => {
+        const isAILoading = aiLoadingField === field.name;
+
+        const renderAIAssistant = () => {
+            if (!field.aiPrompt) return null;
+            return (
+                <button
+                    type="button"
+                    onClick={() => handleAISuggest(field.name, field.aiPrompt)}
+                    disabled={isAILoading}
+                    className="absolute top-0 right-1 flex items-center gap-1.5 text-xs font-bold text-purple-600 bg-purple-50 hover:bg-purple-100 px-2.5 py-1 rounded-md transition-colors"
+                >
+                    {isAILoading ? <RefreshCw size={12} className="animate-spin" /> : <Sparkles size={12} />}
+                    {isAILoading ? 'Generating...' : 'Ask AI'}
+                </button>
+            );
+        };
+
         if (field.type === 'textarea') {
             return (
-                <div key={field.name} className={`space-y-1 ${field.fullWidth ? 'col-span-full' : ''}`}>
+                <div key={field.name} className={`space-y-1 relative ${field.fullWidth ? 'col-span-full' : ''}`}>
                     <label className="text-xs font-bold text-gray-700 uppercase tracking-widest ml-1">{field.label}</label>
+                    {renderAIAssistant()}
                     <textarea
                         name={field.name}
                         value={formData[field.name]}
@@ -66,8 +130,9 @@ const SharedListManager = ({
             )
         }
         return (
-            <div key={field.name} className={`space-y-1 ${field.fullWidth ? 'col-span-full' : ''}`}>
+            <div key={field.name} className={`space-y-1 relative ${field.fullWidth ? 'col-span-full' : ''}`}>
                 <label className="text-xs font-bold text-gray-700 uppercase tracking-widest ml-1">{field.label}</label>
+                {renderAIAssistant()}
                 <input
                     type={field.type || 'text'}
                     name={field.name}

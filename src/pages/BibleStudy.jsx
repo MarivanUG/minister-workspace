@@ -7,7 +7,7 @@ const BibleStudy = ({ records, collectionName }) => {
         { name: 'topic', label: 'Study Topic / Book', type: 'text', placeholder: 'e.g. Book of Romans or Grace', required: true, fullWidth: true },
         { name: 'date', label: 'Study Date', type: 'date', defaultValue: new Date().toISOString().split('T')[0], required: true },
         { name: 'scriptures', label: 'Reference Scriptures', type: 'text', placeholder: 'e.g. Romans 8:1-4' },
-        { name: 'insights', label: 'Insights & Revelation', type: 'textarea', placeholder: 'What the Holy Spirit revealed...', required: true, fullWidth: true },
+        { name: 'insights', label: 'Insights & Revelation', type: 'textarea', placeholder: 'What the Holy Spirit revealed...', required: true, fullWidth: true, aiPrompt: 'Based on the scripture "{scriptures}" and the topic "{topic}", provide a theological breakdown of the text, historical context, and 2 deep spiritual insights a minister could use for teaching.' },
     ];
 
     const renderRecord = (record, onDelete) => (

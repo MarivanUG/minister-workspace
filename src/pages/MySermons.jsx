@@ -4,12 +4,12 @@ import { PenTool, Calendar, Trash2 } from 'lucide-react';
 
 const MySermons = ({ records, collectionName }) => {
     const fields = [
-        { name: 'title', label: 'Sermon Title', type: 'text', placeholder: 'e.g. The Power of Grace', required: true, fullWidth: true },
+        { name: 'title', label: 'Sermon Title', type: 'text', placeholder: 'e.g. The Grace of Giving', required: true, fullWidth: true, aiPrompt: 'Give me a catchy, engaging 5-7 word title for a sermon about: {topic} using scripture {scripture}' },
         { name: 'date', label: 'Date Preached', type: 'date', defaultValue: new Date().toISOString().split('T')[0], required: true },
-        { name: 'scripture', label: 'Main Scripture', type: 'text', placeholder: 'e.g. Ephesians 2:8-9', required: true },
-        { name: 'topic', label: 'Topic / Theme', type: 'text', placeholder: 'e.g. Grace, Salvation', required: true, fullWidth: true },
-        { name: 'notes', label: 'Sermon Notes', type: 'textarea', placeholder: 'Outline, key points, or full manuscript...', required: true, fullWidth: true },
-        { name: 'mediaLink', label: 'Audio/Video Link', type: 'url', placeholder: 'https://youtube.com/... (optional)', fullWidth: true },
+        { name: 'scripture', label: 'Main Scripture', type: 'text', placeholder: 'e.g. 2 Corinthians 8:1-9', required: true },
+        { name: 'topic', label: 'Core Topic / Theme', type: 'text', placeholder: 'e.g. Generosity, Grace', required: true, fullWidth: true },
+        { name: 'notes', label: 'Sermon Notes / Manuscript', type: 'textarea', placeholder: 'Write your full sermon here...', required: true, fullWidth: true, aiPrompt: 'Act as a seasoned Christian minister. Give me a detailed 3-point sermon outline on the topic of "{topic}" based on scripture "{scripture}". Include an intro, 3 points with practical application, and a conclusion.' },
+        { name: 'mediaLink', label: 'Audio / Video Link', type: 'text', placeholder: 'Optional link to recording', fullWidth: true },
     ];
 
     const renderRecord = (record, onDelete) => (
