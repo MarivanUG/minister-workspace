@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { FileText, Sparkles, Wand2, RefreshCw, Key, ArrowRight } from 'lucide-react';
+import { FileText, Sparkles, Wand2, RefreshCw, Key, ArrowRight, UploadCloud, X } from 'lucide-react';
 import { doc, getDoc } from 'firebase/firestore';
 import { db } from '../firebase';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 
 const DocumentSummarizer = () => {
     const [inputText, setInputText] = useState('');
+    const [selectedFile, setSelectedFile] = useState(null);
     const [summary, setSummary] = useState('');
     const [loading, setLoading] = useState(false);
     const [apiKey, setApiKey] = useState('');
@@ -26,7 +27,7 @@ const DocumentSummarizer = () => {
     }, []);
 
     const handleSummarize = async () => {
-        if (!inputText.trim()) return;
+        if (!inputText.trim() && !selectedFile) return;
         if (!apiKey) {
             alert("Please configure your Gemini API Key in Settings first.");
             return;
@@ -39,9 +40,30 @@ const DocumentSummarizer = () => {
             const genAI = new GoogleGenerativeAI(apiKey);
             const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
 
-            const prompt = `You are a theologian and minister's assistant. Please read the following text and provide a comprehensive but concise summary. Include: 1) The main thesis/argument, 2) 3-5 key bullet points, 3) A brief paragraph on how a minister might apply this in a sermon or teaching.\n\nText to summarize:\n${inputText}`;
+            const promptText = `You are a theologian and minister's assistant. Please read the provided document/text and provide a comprehensive but concise summary. Include: 1) The main thesis/argument, 2) 3-5 key bullet points, 3) A brief paragraph on how a minister might apply this in a sermon or teaching.\n\nText to summarize:\n${inputText}`;
 
-            const result = await model.generateContent(prompt);
+            let parts = [promptText];
+
+            if (selectedFile) {
+                const base64Data = await new Promise((resolve, reject) => {
+                    const reader = new FileReader();
+                    reader.onloadend = () => resolve(reader.result.split(',')[1]);
+                    reader.onerror = reject;
+                    reader.readAsDataURL(selectedFile);
+                });
+
+                parts = [
+                    {
+                        inlineData: {
+                            data: base64Data,
+                            mimeType: selectedFile.type || "application/pdf"
+                        }
+                    },
+                    promptText
+                ];
+            }
+
+            const result = await model.generateContent(parts);
             setSummary(result.response.text());
         } catch (error) {
             console.error("Summarization Error:", error);
@@ -75,21 +97,54 @@ const DocumentSummarizer = () => {
                 {/* Input Area */}
                 <div className="bg-white rounded-3xl border border-gray-100 shadow-sm flex flex-col overflow-hidden relative">
                     <div className="bg-gray-50/80 px-5 py-4 border-b border-gray-100 font-bold text-gray-700 flex items-center justify-between">
-                        <span>Source Text</span>
+                        <span>Source Text or PDF</span>
                         <span className="text-xs text-gray-400 font-semibold">{inputText.split(/\s+/).filter(w => w.length > 0).length} words</span>
                     </div>
-                    <div className="flex-1 p-5">
-                        <textarea
-                            value={inputText}
-                            onChange={(e) => setInputText(e.target.value)}
-                            placeholder="Paste your long theological article, book chapter, or commentary here..."
-                            className="w-full h-96 resize-none outline-none font-medium text-gray-800 placeholder:text-gray-300"
-                        />
+                    <div className="flex-1 p-5 flex flex-col">
+                        {selectedFile ? (
+                            <div className="flex items-center justify-between p-4 bg-emerald-50 border border-emerald-200 rounded-xl my-auto">
+                                <div className="flex items-center gap-3">
+                                    <FileText className="text-emerald-500" size={24} />
+                                    <div>
+                                        <p className="text-sm font-bold text-emerald-900 truncate max-w-[200px] sm:max-w-xs">{selectedFile.name}</p>
+                                        <p className="text-xs font-semibold text-emerald-600">{(selectedFile.size / 1024 / 1024).toFixed(2)} MB</p>
+                                    </div>
+                                </div>
+                                <button onClick={() => setSelectedFile(null)} className="p-2 text-emerald-500 hover:text-emerald-700 hover:bg-emerald-100 rounded-lg transition">
+                                    <X size={20} />
+                                </button>
+                            </div>
+                        ) : (
+                            <div className="relative h-full">
+                                <textarea
+                                    value={inputText}
+                                    onChange={(e) => setInputText(e.target.value)}
+                                    placeholder="Paste your long theological article, book chapter, or commentary here..."
+                                    className="w-full h-80 resize-none outline-none font-medium text-gray-800 placeholder:text-gray-300"
+                                />
+                                <div className="absolute bottom-2 right-2 flex gap-2">
+                                    <label className="cursor-pointer bg-white px-4 py-2 border border-gray-200 shadow-sm rounded-lg text-sm font-bold text-gray-700 hover:bg-gray-50 flex items-center gap-2 transition active:scale-95">
+                                        <UploadCloud size={16} /> Upload PDF
+                                        <input
+                                            type="file"
+                                            accept="application/pdf"
+                                            className="hidden"
+                                            onChange={(e) => {
+                                                if (e.target.files && e.target.files[0]) {
+                                                    setSelectedFile(e.target.files[0]);
+                                                    if (inputText === '') setInputText('Please summarize this document.');
+                                                }
+                                            }}
+                                        />
+                                    </label>
+                                </div>
+                            </div>
+                        )}
                     </div>
                     <div className="p-4 bg-gray-50 border-t border-gray-100">
                         <button
                             onClick={handleSummarize}
-                            disabled={loading || !inputText.trim() || !apiKey}
+                            disabled={loading || (!inputText.trim() && !selectedFile) || !apiKey}
                             className="w-full py-3.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-bold shadow-md shadow-emerald-200 transition-all active:scale-95 disabled:opacity-50 flex items-center justify-center gap-2"
                         >
                             {loading ? <RefreshCw size={18} className="animate-spin" /> : <Wand2 size={18} />}
