@@ -39,7 +39,7 @@ const Login = ({ onLogin }) => {
                     {/* Security Notice */}
                     <div className="bg-amber-50 rounded-xl p-4 border border-amber-200/50 mb-6 flex gap-3 text-amber-800 text-sm items-start">
                         <ShieldAlert className="shrink-0 mt-0.5 text-amber-500" size={18} />
-                        <p>Authorized personnel only. Default login is <strong>admin</strong> and <strong>admin123</strong>.</p>
+                        <p>Authorized personnel only.</p>
                     </div>
 
                     <form onSubmit={handleSubmit} className="space-y-5">
