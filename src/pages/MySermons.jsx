@@ -2,8 +2,6 @@ import React from 'react';
 import SharedListManager from '../components/SharedListManager';
 import { PenTool, Calendar, Trash2, Download } from 'lucide-react';
 import { saveAs } from 'file-saver';
-import HTMLToDOCX from 'html-to-docx';
-
 import { toast } from 'react-hot-toast';
 
 const MySermons = ({ records, collectionName }) => {
@@ -16,29 +14,38 @@ const MySermons = ({ records, collectionName }) => {
         { name: 'mediaLink', label: 'Audio / Video Link', type: 'text', placeholder: 'Optional link to recording', fullWidth: true },
     ];
 
-    const handleDownloadDOCX = async (record) => {
-        const loadingToastId = toast.loading('Generating DOCX...');
+    const handleDownloadDOCX = (record) => {
+        const loadingToastId = toast.loading('Generating Word Document...');
         try {
             const htmlString = `
-                <div style="font-family: Arial, sans-serif;">
+                <html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'>
+                <head>
+                    <meta charset='utf-8'>
+                    <title>${record.title}</title>
+                    <style>
+                        body { font-family: 'Arial', sans-serif; font-size: 14pt; }
+                        h1 { color: #333333; font-size: 24pt; }
+                        p { line-height: 1.5; }
+                    </style>
+                </head>
+                <body>
                     <h1>${record.title}</h1>
                     <p><strong>Topic:</strong> ${record.topic}</p>
                     <p><strong>Date:</strong> ${record.date}</p>
                     <p><strong>Scripture:</strong> ${record.scripture}</p>
                     <hr/>
                     ${record.notes || ''}
-                </div>
+                </body>
+                </html>
             `;
-            const fileBuffer = await HTMLToDOCX(htmlString, null, {
-                table: { row: { cantSplit: true } },
-                footer: true,
-                pageNumber: true,
+            const blob = new Blob(['\ufeff', htmlString], {
+                type: 'application/msword'
             });
-            saveAs(fileBuffer, `${record.title.replace(/[^a-z0-9]/gi, '_').toLowerCase()}.docx`);
+            saveAs(blob, `${record.title.replace(/[^a-z0-9]/gi, '_').toLowerCase()}.doc`);
             toast.success('Downloaded successfully!', { id: loadingToastId });
         } catch (error) {
             console.error("DOCX Generation Error:", error);
-            toast.error('Error downloading DOCX.', { id: loadingToastId });
+            toast.error('Error downloading document.', { id: loadingToastId });
         }
     };
 
