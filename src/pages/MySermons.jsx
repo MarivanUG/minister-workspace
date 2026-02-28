@@ -1,6 +1,6 @@
 import React from 'react';
 import SharedListManager from '../components/SharedListManager';
-import { PenTool, Calendar, Trash2, Download } from 'lucide-react';
+import { PenTool, Calendar, Trash2, Download, Archive, ArchiveRestore } from 'lucide-react';
 import { saveAs } from 'file-saver';
 import { toast } from 'react-hot-toast';
 
@@ -49,12 +49,13 @@ const MySermons = ({ records, collectionName }) => {
         }
     };
 
-    const renderRecord = (record, onDelete) => (
+    const renderRecord = (record, onDelete, onArchive) => (
         <div className="flex flex-col sm:flex-row gap-4 justify-between">
             <div className="space-y-3">
                 <div className="flex items-center gap-3">
                     <h4 className="text-xl font-extrabold text-indigo-900">{record.title}</h4>
                     <span className="px-3 py-1 bg-amber-100 text-amber-800 text-xs font-bold rounded-full">{record.topic}</span>
+                    {record.isArchived && <span className="px-2 py-0.5 bg-gray-200 text-gray-600 text-[10px] uppercase font-extrabold rounded-md flex items-center gap-1"><Archive size={10} /> Archived</span>}
                 </div>
                 <div className="flex items-center gap-4 text-sm font-semibold text-gray-500">
                     <span className="flex items-center gap-1.5"><Calendar size={16} className="text-gray-400" /> {record.date}</span>
@@ -76,6 +77,13 @@ const MySermons = ({ records, collectionName }) => {
                     title="Download as Word Document (DOCX)"
                 >
                     <Download size={18} />
+                </button>
+                <button
+                    onClick={onArchive}
+                    className="p-2.5 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-xl transition-all shadow-sm border border-transparent hover:border-slate-200 delay-75 opacity-0 group-hover:opacity-100"
+                    title={record.isArchived ? "Restore to Active" : "Move to Archive"}
+                >
+                    {record.isArchived ? <ArchiveRestore size={18} /> : <Archive size={18} />}
                 </button>
                 <button
                     onClick={onDelete}

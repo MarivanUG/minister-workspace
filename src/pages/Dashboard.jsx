@@ -26,10 +26,15 @@ const StatCard = ({ title, count, icon: Icon, colorClass, highlight, link }) => 
 const Dashboard = ({ sermons, studies, externalSermons }) => {
     const [searchQuery, setSearchQuery] = useState('');
 
+    // Filter out archived items by default across the dashboard
+    const activeSermons = sermons.filter(s => !s.isArchived);
+    const activeStudies = studies.filter(s => !s.isArchived);
+    const activeExternal = externalSermons.filter(s => !s.isArchived);
+
     const allItems = [
-        ...sermons.map(s => ({ ...s, type: 'My Sermon', icon: PenTool, color: 'text-indigo-600', bg: 'bg-indigo-50' })),
-        ...studies.map(s => ({ ...s, type: 'Bible Study', icon: BookOpen, color: 'text-amber-600', bg: 'bg-amber-50' })),
-        ...externalSermons.map(s => ({ ...s, type: 'External Sermon', icon: Headphones, color: 'text-teal-600', bg: 'bg-teal-50' }))
+        ...activeSermons.map(s => ({ ...s, type: 'My Sermon', icon: PenTool, color: 'text-indigo-600', bg: 'bg-indigo-50' })),
+        ...activeStudies.map(s => ({ ...s, type: 'Bible Study', icon: BookOpen, color: 'text-amber-600', bg: 'bg-amber-50' })),
+        ...activeExternal.map(s => ({ ...s, type: 'External Sermon', icon: Headphones, color: 'text-teal-600', bg: 'bg-teal-50' }))
     ];
 
     const allActivity = [...allItems].sort((a, b) => new Date(b.date) - new Date(a.date)).slice(0, 5);
@@ -113,25 +118,25 @@ const Dashboard = ({ sermons, studies, externalSermons }) => {
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                         <StatCard
                             title="My Sermons"
-                            count={sermons.length}
+                            count={activeSermons.length}
                             icon={PenTool}
-                            colorClass="bg-indigo-50 text-indigo-600"
+                            colorClass="bg-indigo-100 text-indigo-600"
                             highlight="bg-indigo-500"
                             link="/sermons"
                         />
                         <StatCard
                             title="Bible Studies"
-                            count={studies.length}
+                            count={activeStudies.length}
                             icon={BookOpen}
-                            colorClass="bg-amber-50 text-amber-600"
+                            colorClass="bg-amber-100 text-amber-600"
                             highlight="bg-amber-500"
                             link="/bible-study"
                         />
                         <StatCard
                             title="Other Preachers"
-                            count={externalSermons.length}
+                            count={activeExternal.length}
                             icon={Headphones}
-                            colorClass="bg-teal-50 text-teal-600"
+                            colorClass="bg-teal-100 text-teal-600"
                             highlight="bg-teal-500"
                             link="/external-sermons"
                         />

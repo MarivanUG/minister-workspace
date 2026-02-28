@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { collection, addDoc, deleteDoc, doc, getDoc, serverTimestamp } from 'firebase/firestore';
+import { collection, addDoc, deleteDoc, doc, getDoc, updateDoc, serverTimestamp } from 'firebase/firestore';
 import { db } from '../firebase';
-import { Plus, Trash2, Calendar, FileText, LayoutList, Sparkles, RefreshCw } from 'lucide-react';
+import { Plus, Trash2, Calendar, FileText, LayoutList, Sparkles, RefreshCw, Archive, ArchiveRestore, Filter, Search } from 'lucide-react';
 import { format } from 'date-fns';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import { toast } from 'react-hot-toast';
@@ -21,6 +21,11 @@ const SharedListManager = ({
         fields.reduce((acc, field) => ({ ...acc, [field.name]: field.defaultValue || '' }), {})
     );
     const [isSubmitting, setIsSubmitting] = useState(false);
+
+    // Filters and Views State
+    const [viewMode, setViewMode] = useState('active'); // 'active' or 'archived'
+    const [dateFilter, setDateFilter] = useState({ year: '', month: '', day: '' });
+    const [showFilters, setShowFilters] = useState(false);
 
     // AI State
     const [apiKey, setApiKey] = useState('');
@@ -101,6 +106,19 @@ const SharedListManager = ({
         }
     };
 
+    const handleArchive = async (id, currentStatus) => {
+        try {
+            const newStatus = !currentStatus;
+            await updateDoc(doc(db, collectionName, id), {
+                isArchived: newStatus
+            });
+            toast.success(newStatus ? "Moved to Archive" : "Restored to Active");
+        } catch (error) {
+            console.error("Error archiving document:", error);
+            toast.error("Failed to update archive status.");
+        }
+    };
+
     // Prepare inputs
     const InputFields = fields.map(field => {
         const isAILoading = aiLoadingField === field.name;
@@ -178,6 +196,31 @@ const SharedListManager = ({
         );
     });
 
+    const filteredRecords = records.filter(record => {
+        // 1. Archive Toggle Filter
+        const isArchived = Boolean(record.isArchived);
+        if (viewMode === 'active' && isArchived) return false;
+        if (viewMode === 'archived' && !isArchived) return false;
+
+        // 2. Date Filtering (year, month, day)
+        if (dateFilter.year || dateFilter.month || dateFilter.day) {
+            // Records should have a 'date' field (YYYY-MM-DD)
+            const recordDate = record.date || '';
+            const [rYear, rMonth, rDay] = recordDate.split('-');
+
+            if (dateFilter.year && dateFilter.year !== rYear) return false;
+            if (dateFilter.month && dateFilter.month !== rMonth) return false;
+            if (dateFilter.day && dateFilter.day !== rDay) return false;
+        }
+
+        return true;
+    });
+
+    // Generate specific dropdown options based on the data
+    const availableYears = [...new Set(records.map(r => r.date?.split('-')[0]).filter(Boolean))].sort((a, b) => b - a);
+    const availableMonths = [...new Set(records.map(r => r.date?.split('-')[1]).filter(Boolean))].sort((a, b) => a - b);
+    const availableDays = [...new Set(records.map(r => r.date?.split('-')[2]).filter(Boolean))].sort((a, b) => a - b);
+
     return (
         <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
             <header className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -218,24 +261,105 @@ const SharedListManager = ({
                 </div>
             )}
 
-            {/* List */}
-            <div className="bg-white rounded-3xl border border-gray-100 shadow-sm overflow-hidden">
-                <div className="p-4 border-b border-gray-50 bg-gray-50/50 flex items-center gap-2">
-                    <LayoutList size={18} className="text-gray-400" />
-                    <h3 className="text-sm font-bold text-gray-700">All {title} ({records.length})</h3>
+            {/* List Header and Controls */}
+            <div className="bg-white rounded-3xl border border-gray-100 shadow-sm overflow-hidden mt-6">
+                <div className="p-4 border-b border-gray-100 bg-gray-50/80 flex flex-col md:flex-row md:items-center justify-between gap-4">
+                    <div className="flex items-center gap-2">
+                        <LayoutList size={20} className="text-gray-500" />
+                        <h3 className="text-sm font-bold text-gray-800">
+                            {viewMode === 'active' ? 'Active' : 'Archived'} {title} ({filteredRecords.length})
+                        </h3>
+                    </div>
+
+                    <div className="flex flex-wrap items-center gap-2">
+                        {/* Archive Toggle Buttons */}
+                        <div className="flex items-center bg-gray-200/50 p-1 rounded-lg mr-2">
+                            <button
+                                onClick={() => setViewMode('active')}
+                                className={`px-4 py-1.5 rounded-md text-xs font-bold transition-all ${viewMode === 'active' ? 'bg-white text-indigo-700 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
+                            >
+                                Active
+                            </button>
+                            <button
+                                onClick={() => setViewMode('archived')}
+                                className={`px-4 py-1.5 flex items-center gap-1 rounded-md text-xs font-bold transition-all ${viewMode === 'archived' ? 'bg-indigo-600 text-white shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
+                            >
+                                <Archive size={12} /> Vault
+                            </button>
+                        </div>
+
+                        {/* Filter Toggle Button */}
+                        <button
+                            onClick={() => setShowFilters(!showFilters)}
+                            className={`p-2 rounded-lg transition-colors ${showFilters || dateFilter.year || dateFilter.month || dateFilter.day ? 'bg-indigo-100 text-indigo-700' : 'bg-white border border-gray-200 text-gray-600 hover:bg-gray-50'}`}
+                            title="Filter by Date"
+                        >
+                            <Filter size={18} />
+                        </button>
+                    </div>
                 </div>
 
-                {records.length === 0 ? (
+                {/* Filter Controls Row */}
+                {showFilters && (
+                    <div className="flex flex-wrap items-center gap-3 p-4 bg-indigo-50/30 border-b border-gray-100 animate-in fade-in slide-in-from-top-2">
+                        <div className="flex flex-col">
+                            <label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-1">Year</label>
+                            <select
+                                value={dateFilter.year}
+                                onChange={(e) => setDateFilter(prev => ({ ...prev, year: e.target.value }))}
+                                className="text-sm border border-gray-200 rounded-lg px-2 py-1.5 focus:ring-2 focus:ring-indigo-500 outline-none"
+                            >
+                                <option value="">All</option>
+                                {availableYears.map(year => <option key={year} value={year}>{year}</option>)}
+                            </select>
+                        </div>
+                        <div className="flex flex-col">
+                            <label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-1">Month</label>
+                            <select
+                                value={dateFilter.month}
+                                onChange={(e) => setDateFilter(prev => ({ ...prev, month: e.target.value }))}
+                                className="text-sm border border-gray-200 rounded-lg px-2 py-1.5 focus:ring-2 focus:ring-indigo-500 outline-none"
+                            >
+                                <option value="">All</option>
+                                {availableMonths.map(m => <option key={m} value={m}>{m}</option>)}
+                            </select>
+                        </div>
+                        <div className="flex flex-col">
+                            <label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-1">Day</label>
+                            <select
+                                value={dateFilter.day}
+                                onChange={(e) => setDateFilter(prev => ({ ...prev, day: e.target.value }))}
+                                className="text-sm border border-gray-200 rounded-lg px-2 py-1.5 focus:ring-2 focus:ring-indigo-500 outline-none"
+                            >
+                                <option value="">All</option>
+                                {availableDays.map(d => <option key={d} value={d}>{d}</option>)}
+                            </select>
+                        </div>
+
+                        {(dateFilter.year || dateFilter.month || dateFilter.day) && (
+                            <button
+                                onClick={() => setDateFilter({ year: '', month: '', day: '' })}
+                                className="mt-4 text-xs text-rose-600 font-bold hover:underline"
+                            >
+                                Clear
+                            </button>
+                        )}
+                    </div>
+                )}
+
+                {filteredRecords.length === 0 ? (
                     <div className="p-16 flex flex-col items-center justify-center text-gray-400">
                         <FileText size={48} className="mb-4 text-gray-200" />
-                        <p className="font-semibold text-lg">No records found.</p>
-                        <p className="text-sm">Click "New Record" to add your first entry.</p>
+                        <p className="font-semibold text-lg">
+                            {viewMode === 'archived' ? 'No archived records.' : 'No active records found.'}
+                        </p>
+                        {viewMode === 'active' && <p className="text-sm">Click "New Record" to add your first entry.</p>}
                     </div>
                 ) : (
                     <div className="divide-y divide-gray-100">
-                        {records.map(record => (
-                            <div key={record.id} className="p-6 hover:bg-indigo-50/30 transition-colors group">
-                                {listRenderer(record, () => handleDelete(record.id))}
+                        {filteredRecords.map(record => (
+                            <div key={record.id} className="p-6 hover:bg-indigo-50/30 transition-colors group relative">
+                                {listRenderer(record, () => handleDelete(record.id), () => handleArchive(record.id, record.isArchived))}
                             </div>
                         ))}
                     </div>
