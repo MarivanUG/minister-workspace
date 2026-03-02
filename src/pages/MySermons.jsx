@@ -119,7 +119,7 @@ const MySermons = ({ records, collectionName }) => {
             records={records}
             collectionName={collectionName}
             fields={fields}
-            listRenderer={renderRecord}
+            listRenderer={listRenderer}
         />
     );
 };

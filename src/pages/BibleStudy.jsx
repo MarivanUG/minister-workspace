@@ -74,7 +74,7 @@ const BibleStudy = ({ records, collectionName }) => {
             records={records}
             collectionName={collectionName}
             fields={fields}
-            listRenderer={renderRecord}
+            listRenderer={listRenderer}
         />
     );
 };
