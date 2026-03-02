@@ -49,51 +49,67 @@ const MySermons = ({ records, collectionName }) => {
         }
     };
 
-    const renderRecord = (record, onDelete, onArchive) => (
-        <div className="flex flex-col sm:flex-row gap-4 justify-between">
-            <div className="space-y-3">
-                <div className="flex items-center gap-3">
-                    <h4 className="text-xl font-extrabold text-indigo-900">{record.title}</h4>
-                    <span className="px-3 py-1 bg-amber-100 text-amber-800 text-xs font-bold rounded-full">{record.topic}</span>
-                    {record.isArchived && <span className="px-2 py-0.5 bg-gray-200 text-gray-600 text-[10px] uppercase font-extrabold rounded-md flex items-center gap-1"><Archive size={10} /> Archived</span>}
+    const SermonRecord = ({ record, onDelete, onArchive }) => {
+        const [isExpanded, setIsExpanded] = React.useState(false);
+
+        return (
+            <div className="flex flex-col sm:flex-row gap-4 justify-between">
+                <div className="space-y-3 w-full">
+                    <div className="flex items-center gap-3">
+                        <h4 className="text-xl font-extrabold text-indigo-900">{record.title}</h4>
+                        <span className="px-3 py-1 bg-amber-100 text-amber-800 text-xs font-bold rounded-full">{record.topic}</span>
+                        {record.isArchived && <span className="px-2 py-0.5 bg-gray-200 text-gray-600 text-[10px] uppercase font-extrabold rounded-md flex items-center gap-1"><Archive size={10} /> Archived</span>}
+                    </div>
+                    <div className="flex items-center gap-4 text-sm font-semibold text-gray-500">
+                        <span className="flex items-center gap-1.5"><Calendar size={16} className="text-gray-400" /> {record.date}</span>
+                        <span className="text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded-md border border-indigo-100">{record.scripture}</span>
+                    </div>
+                    {record.notes && (
+                        <div>
+                            <div className={`text-gray-700 text-sm bg-gray-50 p-4 rounded-xl border border-gray-100 leading-relaxed font-medium prose prose-sm prose-indigo max-w-none richtext-content relative ${isExpanded ? '' : 'max-h-32 overflow-hidden'}`} dangerouslySetInnerHTML={{ __html: record.notes }}></div>
+                            {!isExpanded && (
+                                <div className="h-8 bg-gradient-to-t from-gray-50 to-transparent -mt-8 relative z-10 mx-1"></div>
+                            )}
+                            <button onClick={() => setIsExpanded(!isExpanded)} className="text-indigo-600 font-bold text-xs mt-2 hover:text-indigo-800 transition-colors uppercase tracking-wider bg-indigo-50 px-3 py-1.5 rounded-lg active:scale-95">
+                                {isExpanded ? 'Show Less' : 'Read Full Message'}
+                            </button>
+                        </div>
+                    )}
+                    {record.mediaLink && (
+                        <a href={record.mediaLink} target="_blank" rel="noreferrer" className="inline-block mt-2 text-sm font-bold text-indigo-600 hover:text-indigo-800 hover:underline">
+                            View Media Recording &rarr;
+                        </a>
+                    )}
                 </div>
-                <div className="flex items-center gap-4 text-sm font-semibold text-gray-500">
-                    <span className="flex items-center gap-1.5"><Calendar size={16} className="text-gray-400" /> {record.date}</span>
-                    <span className="text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded-md border border-indigo-100">{record.scripture}</span>
+                <div className="shrink-0 flex sm:flex-col items-center justify-start gap-2 pt-1">
+                    <button
+                        onClick={() => handleDownloadDOCX(record)}
+                        className="p-2.5 text-indigo-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-xl transition-all shadow-sm border border-transparent hover:border-indigo-100 delay-75 opacity-0 group-hover:opacity-100"
+                        title="Download as Word Document (DOCX)"
+                    >
+                        <Download size={18} />
+                    </button>
+                    <button
+                        onClick={onArchive}
+                        className="p-2.5 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-xl transition-all shadow-sm border border-transparent hover:border-slate-200 delay-75 opacity-0 group-hover:opacity-100"
+                        title={record.isArchived ? "Restore to Active" : "Move to Archive"}
+                    >
+                        {record.isArchived ? <ArchiveRestore size={18} /> : <Archive size={18} />}
+                    </button>
+                    <button
+                        onClick={onDelete}
+                        className="p-2.5 text-rose-300 hover:text-rose-600 hover:bg-rose-50 rounded-xl transition-all shadow-sm border border-transparent hover:border-rose-100 delay-75 opacity-0 group-hover:opacity-100"
+                        title="Delete Sermon"
+                    >
+                        <Trash2 size={18} />
+                    </button>
                 </div>
-                {record.notes && (
-                    <div className="text-gray-700 text-sm bg-gray-50 p-4 rounded-xl border border-gray-100 leading-relaxed font-medium prose prose-sm prose-indigo max-w-none richtext-content" dangerouslySetInnerHTML={{ __html: record.notes }}></div>
-                )}
-                {record.mediaLink && (
-                    <a href={record.mediaLink} target="_blank" rel="noreferrer" className="inline-block mt-2 text-sm font-bold text-indigo-600 hover:text-indigo-800 hover:underline">
-                        View Media Recording &rarr;
-                    </a>
-                )}
             </div>
-            <div className="shrink-0 flex sm:flex-col items-center justify-end gap-2">
-                <button
-                    onClick={() => handleDownloadDOCX(record)}
-                    className="p-2.5 text-indigo-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-xl transition-all shadow-sm border border-transparent hover:border-indigo-100 delay-75 opacity-0 group-hover:opacity-100"
-                    title="Download as Word Document (DOCX)"
-                >
-                    <Download size={18} />
-                </button>
-                <button
-                    onClick={onArchive}
-                    className="p-2.5 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-xl transition-all shadow-sm border border-transparent hover:border-slate-200 delay-75 opacity-0 group-hover:opacity-100"
-                    title={record.isArchived ? "Restore to Active" : "Move to Archive"}
-                >
-                    {record.isArchived ? <ArchiveRestore size={18} /> : <Archive size={18} />}
-                </button>
-                <button
-                    onClick={onDelete}
-                    className="p-2.5 text-rose-300 hover:text-rose-600 hover:bg-rose-50 rounded-xl transition-all shadow-sm border border-transparent hover:border-rose-100 delay-75 opacity-0 group-hover:opacity-100"
-                    title="Delete Sermon"
-                >
-                    <Trash2 size={18} />
-                </button>
-            </div>
-        </div>
+        );
+    };
+
+    const listRenderer = (record, onDelete, onArchive) => (
+        <SermonRecord record={record} onDelete={onDelete} onArchive={onArchive} />
     );
 
     return (

@@ -5,8 +5,8 @@ import { Plus, Trash2, Calendar, FileText, LayoutList, Sparkles, RefreshCw, Arch
 import { format } from 'date-fns';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import { toast } from 'react-hot-toast';
-import ReactQuill from 'react-quill';
-import 'react-quill/dist/quill.snow.css';
+import ReactQuill from 'react-quill-new';
+import 'react-quill-new/dist/quill.snow.css';
 
 const SharedListManager = ({
     title,
